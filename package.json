@@ -1,0 +1,11 @@
+{
+  "name": "punchy-guy-ar",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "selfsigned": "^5.5.0",
+    "three": "^0.186.1"
+  }
+}

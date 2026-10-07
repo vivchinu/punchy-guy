@@ -1,0 +1,9 @@
+{
+  "name": "Punchy Guy AR",
+  "short_name": "Punchy Guy",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#9fdff0",
+  "theme_color": "#17130f",
+  "start_url": "."
+}

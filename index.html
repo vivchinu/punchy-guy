@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#17130f" />
+  <title>Punchy Guy</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E👊%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Teko:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1a140f;
+      --red: #e23a2b;
+      --paper: #f4efe6;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #8fd8ea;
+      color: var(--ink);
+      font-family: "Teko", Impact, sans-serif;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    #cam, #gl, #fx, #playfield {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    #cam {
+      object-fit: cover;
+      z-index: 0;
+      opacity: 0;
+      background: #111;
+    }
+    #cam.on { opacity: 1; }
+    #gl { z-index: 1; pointer-events: none; }
+    #fx { z-index: 3; pointer-events: none; }
+    #ui { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+    #playfield { z-index: 2; pointer-events: auto; }
+    #hud, #boot, #over {
+      position: fixed;
+      inset: 0;
+      z-index: 5;
+      pointer-events: none;
+    }
+    #boot, #over { pointer-events: auto; }
+    #hud .bar, #hud button, #over button, #boot button { pointer-events: auto; }
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: calc(10px + env(safe-area-inset-top)) 16px 0;
+    }
+    .kos {
+      line-height: 0.8;
+    }
+    .kos b {
+      display: block;
+      font-family: "Lilita One", Impact, sans-serif;
+      font-size: 64px;
+      font-weight: 400;
+      letter-spacing: -1px;
+      color: white;
+      -webkit-text-stroke: 6px var(--ink);
+      paint-order: stroke fill;
+    }
+    .kos span, .combo, .hint, .wave {
+      color: white;
+      -webkit-text-stroke: 4px var(--ink);
+      paint-order: stroke fill;
+      letter-spacing: 1px;
+    }
+    .kos span { font-size: 22px; letter-spacing: 3px; }
+    .combo {
+      min-height: 28px;
+      font-size: 28px;
+      text-align: center;
+    }
+    .combo.pop { animation: pop 0.28s ease-out; }
+    .hearts { font-size: 28px; letter-spacing: 2px; text-align: right; }
+    .hearts i { font-style: normal; opacity: 0.28; }
+    .hearts i.on { opacity: 1; }
+    .hint {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      text-align: center;
+      font-size: 20px;
+      letter-spacing: 1px;
+    }
+    #reticle {
+      position: fixed;
+      width: 78px;
+      height: 78px;
+      margin: -39px 0 0 -39px;
+      z-index: 4;
+      pointer-events: none;
+      display: none;
+    }
+    #reticle.on { display: block; }
+    #reticle svg { width: 100%; height: 100%; overflow: visible; }
+    #sound, #recenter {
+      position: absolute;
+      top: calc(12px + env(safe-area-inset-top));
+      border: 3px solid var(--ink);
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Teko", Impact, sans-serif;
+      font-size: 20px;
+      letter-spacing: 1px;
+      border-radius: 999px;
+      padding: 2px 12px 0;
+      height: 36px;
+    }
+    #sound { left: 50%; transform: translateX(-50%); }
+    #recenter { right: 16px; }
+    #place-hint {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      top: 38%;
+      text-align: center;
+      font-family: "Lilita One", Impact, sans-serif;
+      font-size: 34px;
+      line-height: 0.95;
+      color: #ffe14a;
+      -webkit-text-stroke: 6px var(--ink);
+      paint-order: stroke fill;
+      pointer-events: none;
+    }
+    #boot, #over {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 28px 22px calc(28px + env(safe-area-inset-bottom));
+      background:
+        radial-gradient(circle at 50% 18%, rgba(255,255,255,0.55), transparent 42%),
+        linear-gradient(#8fe7ee, #d5def8 70%);
+    }
+    #boot h1, #over h2 {
+      font-family: "Lilita One", Impact, sans-serif;
+      font-size: clamp(64px, 16vw, 108px);
+      line-height: 0.82;
+      margin: 0 0 10px;
+      color: var(--red);
+      -webkit-text-stroke: 8px var(--ink);
+      paint-order: stroke fill;
+      text-transform: uppercase;
+    }
+    #boot p, #over p {
+      margin: 0 0 16px;
+      font-size: 26px;
+      line-height: 1;
+      max-width: 22ch;
+      color: var(--ink);
+    }
+    .note { font-size: 18px !important; opacity: 0.8; max-width: 34ch !important; }
+    button.big {
+      appearance: none;
+      border: 4px solid var(--ink);
+      background: var(--red);
+      color: white;
+      font-family: "Lilita One", Impact, sans-serif;
+      font-size: 28px;
+      border-radius: 18px;
+      padding: 12px 16px 10px;
+      margin-top: 10px;
+      box-shadow: 0 6px 0 var(--ink);
+    }
+    button.big.alt { background: #ffd23f; color: var(--ink); }
+    button.big:active { transform: translateY(3px); box-shadow: 0 3px 0 var(--ink); }
+    #over { display: none; z-index: 6; }
+    #over.show { display: flex; }
+    #boot.hide { display: none; }
+    #floaters { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+    .floater {
+      position: absolute;
+      font-family: "Lilita One", Impact, sans-serif;
+      color: #ffe14a;
+      -webkit-text-stroke: 6px var(--ink);
+      paint-order: stroke fill;
+      font-size: 42px;
+      animation: floatup 0.7s ease-out forwards;
+      translate: -50% -50%;
+    }
+    .floater.ko { font-size: 84px; color: white; }
+    .flash {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      background: white;
+      opacity: 0;
+    }
+    .flash.on { animation: flash 0.18s ease-out; }
+    #hurt {
+      position: fixed;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: inset 0 0 80px 20px rgba(226, 42, 32, 0);
+    }
+    #hurt.on { animation: hurt 0.35s ease-out; }
+    @keyframes pop { from { transform: scale(1.4); } to { transform: scale(1); } }
+    @keyframes floatup {
+      from { opacity: 1; transform: translateY(8px) scale(0.8) rotate(-6deg); }
+      to { opacity: 0; transform: translateY(-70px) scale(1.15) rotate(4deg); }
+    }
+    @keyframes flash { from { opacity: 0.7; } to { opacity: 0; } }
+    @keyframes hurt { from { box-shadow: inset 0 0 90px 24px rgba(226, 42, 32, 0.75); } to { box-shadow: inset 0 0 80px 20px rgba(226, 42, 32, 0); } }
+  </style>
+</head>
+<body>
+  <video id="cam" playsinline webkit-playsinline autoplay muted></video>
+  <canvas id="gl"></canvas>
+  <div id="ui">
+  <div id="playfield"></div>
+  <canvas id="fx"></canvas>
+  <div id="reticle" aria-hidden="true">
+    <svg viewBox="0 0 78 78">
+      <circle cx="39" cy="39" r="28" fill="none" stroke="#1a140f" stroke-width="5"/>
+      <path d="M39 4 V22 M39 56 V74 M4 39 H22 M56 39 H74" stroke="#1a140f" stroke-width="5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div id="floaters"></div>
+  <div id="flash" class="flash"></div>
+  <div id="hurt"></div>
+  <div id="hud" hidden>
+    <div class="top">
+      <div class="kos"><span>KO</span><b id="ko-count">0</b></div>
+      <div class="hearts" id="hearts"></div>
+    </div>
+    <div class="combo" id="combo"></div>
+    <button id="sound" type="button">Sound on</button>
+    <button id="recenter" type="button" hidden>Move ring</button>
+    <div class="hint" id="hint">TAP JAB · FLICK HOOK · SWIPE UP UPPERCUT</div>
+    <div id="place-hint" hidden>Look at the floor<br>Tap to place the ring</div>
+  </div>
+  <div id="over">
+    <h2 id="over-title">Down</h2>
+    <p id="over-copy"></p>
+    <button class="big" id="retry" type="button">Get up</button>
+  </div>
+  </div>
+  <div id="boot">
+    <h1>Punchy<br>Guy</h1>
+    <p>They’re in your room. Tap, hook, and uppercut them out.</p>
+    <button class="big" id="go-ar" type="button">Place on the floor</button>
+    <button class="big alt" id="go-demo" type="button">Practice ring</button>
+    <p class="note" id="boot-note">Floor placement uses ARCore. Open the https link in Chrome on an Android phone, then look at the floor and tap.</p>
+  </div>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.js",
+        "three/addons/": "./vendor/addons/"
+      }
+    }
+  </script>
+  <script type="module" src="./game.js"></script>
+</body>
+</html>
